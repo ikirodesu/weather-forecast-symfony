@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Прогноз погоды</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container my-5">
+    <h1 class="text-center mb-4">Прогноз погоды</h1>
+
+    <!-- Форма для поиска -->
+    <form id="searchForm" class="mb-3">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('search_form') }}">
+        <div class="input-group">
+            <input type="text" id="city" name="city" class="form-control" placeholder="Введите город" required>
+            <button type="submit" class="btn btn-primary">Показать погоду</button>
+        </div>
+    </form>
+
+    <!-- Кнопка переключения единиц измерения -->
+    <form action="{{ path('toggle_units') }}" method="GET" class="mb-4">
+        <button type="submit" class="btn btn-secondary">
+            Переключить единицы на ({{ unit == 'metric' ? 'Фаренгейт' : 'Цельсий' }})
+        </button>
+    </form>
+
+    <!-- Контейнер для ошибок -->
+    <div id="errorContainer"></div>
+
+    <!-- Контейнер для данных о погоде -->
+    <div id="weatherData" class="mb-4"></div>
+
+    <!-- Контейнер для недавних поисков -->
+    <div id="recentSearches">
+        {% if recentSearches is defined and recentSearches %}
+            <h2>Недавние поиски</h2>
+            <ul class="list-group">
+                {% for search in recentSearches %}
+                    <li class="list-group-item">{{ search }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        // Обработка отправки формы поиска
+        $('#searchForm').on('submit', function (e) {
+            e.preventDefault();
+
+            $('#errorContainer').html(''); // Очистка ошибок
+
+            let city = $('#city').val();
+            let csrfToken = $('input[name="_csrf_token"]').val();
+
+            $.ajax({
+                url: "{{ path('weather_search') }}",
+                method: 'POST',
+                data: { city: city, _csrf_token: csrfToken },
+                success: function (response) {
+                    if (response.success) {
+                        // Обновление данных о погоде...
+                    } else {
+                        showError(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    let errorMessage = 'Ошибка при выполнении запроса.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    showError(errorMessage);
+                }
+            });
+        });
+
+        // Функция для отображения ошибок
+        function showError(message) {
+            $('#errorContainer').html(`
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `);
+        }
+    });
+</script>
+</body>
+</html>
