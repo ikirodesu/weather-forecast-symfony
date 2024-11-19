@@ -7,7 +7,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class WeatherService
 {
     private $httpClient;
-    private $apiKey;
+    private string $apiKey;
 
     public function __construct(HttpClientInterface $httpClient, string $apiKey = '')
     {
